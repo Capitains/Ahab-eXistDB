@@ -17,6 +17,9 @@ declare namespace util="http://exist-db.org/xquery/util";
 declare namespace ft="http://exist-db.org/xquery/lucene";
 declare namespace tei="http://www.tei-c.org/ns/1.0";
 
+declare variable $ahabx:conf := fn:doc("../conf/conf.xml");
+declare variable $ahabx:inventories := collection($ahabx:conf//repositories/@inventoryCollection/text());
+
 (: 
  : Get the xpath of the smallest node for a given text record.
 :)
@@ -32,11 +35,10 @@ declare function ahabx:citationXpath($citation) {
 (: 
  :)
 declare function ahabx:collectionFromUrn($a_urn) {
-    let $components := fn:tokenize($a_urn, ":")
-    let $namespace := $components[3]
-    let $workComponents := fn:tokenize($components[4], "\.")
-    let $path := ($namespace, $workComponents)
-    return fn:string-join($path, "/")
+    for $item in $ahabx:inventories//ti:edition[fn:starts-with(@urn, $a_urn)]//ti:online/@docname
+    return fn:doc(
+        fn:string($item)
+    )
 };
 
 (: 
@@ -64,9 +66,8 @@ declare %private function local:parentUrns($node) {
 declare function ahabx:search($a_urn, $a_query, $a_start, $a_limit)
 {
     let $collection_from_urn := ahabx:collectionFromUrn($a_urn)
-    let $collection := fn:concat("/db/repository/", $collection_from_urn)
     let $config := <config xmlns="" width="200"/>
-    let $hits := collection($collection)//tei:body[ft:query(., $a_query)]
+    let $hits := $collection_from_urn//tei:body[ft:query(., $a_query)]
     
     let $matches := for $hit in $hits return kwic:expand($hit)
     let $hitCount :=  count($matches//exist:match)
@@ -74,7 +75,7 @@ declare function ahabx:search($a_urn, $a_query, $a_start, $a_limit)
     let $results := 
     for $hit in $hits
         let $path := fn:concat(util:collection-name($hit), "/", util:document-name($hit))
-        let $docname := collection("/db/repository/inventory")//ti:online[@docname=$path] 
+        let $docname := $ahabx:inventories//ti:online[@docname=$path][1]
         let $editionNode := $docname/..
         
         let $urn := if ($editionNode/@urn)
@@ -152,12 +153,12 @@ declare %private function local:fake-match-document($citations as element()*, $b
 declare function ahabx:permalink($a_urn)
 {
     let $parsed_urn := ahabx:simpleUrnParser($a_urn)
-    let $work := collection("/db/repository/inventory")//ti:work[@urn = $parsed_urn/workUrn/text()]
-    let $inv := $work/ancestor::*[@tiid][1]/@tiid
+    let $inv := ($ahabx:inventories//ti:TextInventory[count(.//ti:work[@urn eq $parsed_urn/workUrn/text()]/ti:edition) = 1])[1]
+    let $work := $inv//ti:work[@urn eq $parsed_urn/workUrn/text()]
     
     let $urn := 
         if (fn:empty($parsed_urn/version/text()))
-        then fn:string($work/ti:edition[1][@urn]/@urn)
+        then fn:string($work//ti:edition[1]/@urn)
         else fn:string($parsed_urn/version/text())
         
     let $urn_passage :=
@@ -173,7 +174,7 @@ declare function ahabx:permalink($a_urn)
     return element ahab:reply {
         element ahab:urn { $urn_passage },
         element ahab:request { fn:string($request) },
-        element ahab:inventory { fn:string($inv) }
+        element ahab:inventory { fn:string($inv/@tiid) }
     }
 };
 
