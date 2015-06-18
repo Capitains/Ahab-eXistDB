@@ -27,28 +27,28 @@ declare
     %rest:query-param("limit", "{$limit}", "5")
     %rest:produces("application/xml", "text/xml")
 function ahab-rest:root(
-    $e_request as xs:string*,
-    $e_urn as xs:string*,
-    $e_query as xs:string*,
-    $e_start as xs:string*,
-    $e_limit as xs:string*
+    $request as xs:string*,
+    $urn as xs:string*,
+    $query as xs:string*,
+    $start as xs:string*,
+    $limit as xs:string*
 ) {
     
     let $startTime := util:system-time()
-    let $start := xs:integer($e_start)
-    let $limit := xs:integer($e_limit)
-    let $request := ahab-rest:routerText($e_request)
+    let $_start := xs:integer($start)
+    let $_limit := xs:integer($limit)
+    let $_request := ahab-rest:routerText($request)
     
     let $reply :=
         try {
-          if ($request = 'Search')
-            then ahabx:search($e_urn, $e_query, $start, $limit)
-          else if ($request = 'Permalink')
-            then ahabx:permalink($e_urn)
+          if ($_request = 'Search')
+            then ahabx:search($urn, $query, $_start, $_limit)
+          else if ($_request = 'Permalink')
+            then ahabx:permalink($urn)
           else
             fn:error(
               xs:QName("INVALID-REQUEST"),
-              "Unsupported request: " || $e_request
+              "Unsupported request: " || $request
             )
         } catch * {
           ahab-rest:errorLayout($err:description, $err:value, $err:code, $err:line-number, $err:column-number, $err:additional)
@@ -57,7 +57,7 @@ function ahab-rest:root(
     return
       if (fn:node-name($reply) eq xs:QName("ahab:ahabError") or fn:empty($reply))
       then ahab-rest:debug($reply)
-      else ahab-rest:http-okay($e_request, $e_urn, $e_query, $limit, $start, $startTime, $reply)
+      else ahab-rest:http-okay($_request, $urn, $query, $_limit, $_start, $startTime, $reply)
 }; 
 
 declare %private 
@@ -110,7 +110,7 @@ declare %private function ahab-rest:http-response($http-code as xs:integer, $res
 declare %private function ahab-rest:debug($information as node()*) {
     let $code := 
         if ($information/code/text() eq "UNKNOWN-RESOURCE")
-        then 422
+        then 409
         else 400
     return
       if($ahab-rest:debug/text() eq "yes")
