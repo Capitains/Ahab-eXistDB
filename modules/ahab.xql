@@ -10,7 +10,7 @@ xquery version "3.0";
 module namespace ahabx = "http://github.com/capitains/ahab/x";
 
 import module namespace kwic="http://exist-db.org/xquery/kwic";
-declare namespace ahab = "http://github.com/capitains/ahab";
+declare namespace ahab ="http://github.com/Capitains/ahab";
 declare namespace ti = "http://chs.harvard.edu/xmlns/cts";
 declare namespace util="http://exist-db.org/xquery/util";
 declare namespace ft="http://exist-db.org/xquery/lucene";

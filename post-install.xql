@@ -8,5 +8,4 @@ import module namespace xrest="http://exquery.org/ns/restxq/exist" at "java:org.
 (: the target collection into which the app is deployed :)
 declare variable $target external;
 
-xrest:register-module(xs:anyURI($target || "/modules/rest.xql")),
-xmldb:create-collection("/db", "urns-cache")
+xrest:register-module(xs:anyURI($target || "/modules/rest.xql"))

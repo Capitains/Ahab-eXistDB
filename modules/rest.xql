@@ -126,7 +126,7 @@ function ahab-rest:http-okay(
     $e_query as xs:string*,
     $limit as xs:int*,
     $start as xs:int*,
-    $startTime as xs:int,
+    $startTime as xs:time,
     $reply as node()
 ) {
     ahab-rest:http-response(200, 
