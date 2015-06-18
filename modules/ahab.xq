@@ -11,7 +11,6 @@ module namespace ahabx = "http://github.com/capitains/ahab/x";
 
 import module namespace kwic="http://exist-db.org/xquery/kwic";
 declare namespace ahab = "http://github.com/capitains/ahab";
-declare namespace CTS = "http://chs.harvard.edu/xmlns/cts";
 declare namespace ti = "http://chs.harvard.edu/xmlns/cts";
 declare namespace util="http://exist-db.org/xquery/util";
 declare namespace ft="http://exist-db.org/xquery/lucene";
@@ -181,18 +180,12 @@ declare function ahabx:permalink($a_urn)
 declare function ahabx:simpleUrnParser($a_urn)
 {
     let $components := fn:tokenize($a_urn, ":")
-    let $namespace := $components[3]
     let $workComponents := fn:tokenize($components[4], "\.")
-    (: TODO do we need to handle the possibility of a work without a text group? :)
     let $textgroup := $workComponents[1]
     let $work := $workComponents[2]
 
     let $passage := $components[5]
-    let $passageComponents := fn:tokenize($components[5], "-")
-    let $part1 := $passageComponents[1]
-    let $part2 := $passageComponents[2]
-    let $part2 := if (fn:empty($part2)) then $part1 else $part2
-
+    
     let $namespaceUrn := fn:string-join($components[1,2,3], ":")
     let $groupUrn := if (fn:exists($textgroup)) then $namespaceUrn || ":" || $textgroup else ()
     let $workUrn := if(fn:exists($work)) then $groupUrn || "." || $work else ()
