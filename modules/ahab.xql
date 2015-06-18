@@ -64,7 +64,40 @@ declare %private function local:parentUrns($node) {
 
 declare function ahabx:search($a_urn, $a_query, $a_start, $a_limit)
 {
+    let $_ :=
+        if(fn:empty($a_urn))
+        then 
+            fn:error(
+              xs:QName("MISSING-PARAMETER"),
+              "Missing parameter 'urn' "
+            )
+        else if (fn:empty($a_query))
+        then 
+            fn:error(
+              xs:QName("MISSING-PARAMETER"),
+              "Missing parameter 'query' "
+            )
+        else if (fn:empty($a_start))
+        then 
+            fn:error(
+              xs:QName("WRONG-PARAMETER-VALUE"),
+              "Wrong parameter value for 'limit' "
+            )
+        else if (fn:empty($a_limit))
+        then 
+            fn:error(
+              xs:QName("WRONG-PARAMETER-VALUE"),
+              "Wrong parameter value for 'limit' "
+            )
+        else ()
     let $collection_from_urn := ahabx:collectionFromUrn($a_urn)
+    let $__ := 
+        if(fn:empty($collection_from_urn))
+        then fn:error(
+              xs:QName("UNKNOWN-RESOURCE"),
+              "Wrong parameter value for 'urn' : no resource available for this information "
+        )
+        else ()
     let $config := <config xmlns="" width="200"/>
     let $hits := $collection_from_urn//tei:body[ft:query(., $a_query)]
     
@@ -151,8 +184,24 @@ declare %private function local:fake-match-document($citations as element()*, $b
  :)
 declare function ahabx:permalink($a_urn)
 {
+    let $_ :=
+        if(fn:empty($a_urn))
+        then 
+            fn:error(
+              xs:QName("MISSING-PARAMETER"),
+              "Missing parameter 'urn' "
+            )
+        else ()
     let $parsed_urn := ahabx:simpleUrnParser($a_urn)
     let $inv := ($ahabx:inventories//ti:TextInventory[count(.//ti:work[@urn eq $parsed_urn/workUrn/text()]/ti:edition) = 1])[1]
+    let $_ :=
+        if(fn:empty($inv))
+        then 
+            fn:error(
+              xs:QName("UNKOWN-RESOURCE"),
+              "Wrong parameter value for 'urn' : no resource available for this information "
+            )
+        else ()
     let $work := $inv//ti:work[@urn eq $parsed_urn/workUrn/text()]
     
     let $urn := 

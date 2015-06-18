@@ -7,12 +7,13 @@ xquery version "3.0";
  : ponteineptique@github
  :)
 
-import module namespace ahabx = "http://github.com/capitains/ahab/x"
-       at "./ahab.xq";
+module namespace ahab-rest = "http://github.com/capitains/ahab-rest";
 
-declare namespace ahab-rest = "http://github.com/capitains/ahab-rest";
-declare namespace ahab ="http://github.com/Capitais/ahab";
+import module namespace ahabx = "http://github.com/capitains/ahab/x" at "./ahab.xql";
+declare namespace ahab ="http://github.com/Capitains/ahab";
 declare namespace rest = "http://exquery.org/ns/restxq";
+declare namespace output = "http://www.w3.org/2010/xslt-xquery-serialization";
+declare namespace util="http://exist-db.org/xquery/util";
 
 declare variable $ahab-rest:debug := fn:doc("../conf/conf.xml")//debug;
 
@@ -40,9 +41,9 @@ function ahab-rest:root(
     
     let $reply :=
         try {
-          if ($query = 'Search')
+          if ($request = 'Search')
             then ahabx:search($e_urn, $e_query, $start, $limit)
-          else if ($query = 'Permalink')
+          else if ($request = 'Permalink')
             then ahabx:permalink($e_urn)
           else
             fn:error(
@@ -54,15 +55,21 @@ function ahab-rest:root(
         }
     
     return
-      if (fn:node-name($reply) eq xs:QName("ahab:ahabError"))
-      then
-        ahab-rest:debug($reply)
-      else
-        ahab-rest:http200($e_request, $e_urn, $e_query, $limit, $start, $startTime, $reply)
+      if (fn:node-name($reply) eq xs:QName("ahab:ahabError") or fn:empty($reply))
+      then ahab-rest:debug($reply)
+      else ahab-rest:http-okay($e_request, $e_urn, $e_query, $limit, $start, $startTime, $reply)
 }; 
 
-declare %private function ahab-rest:errorLayout
-    ($description, $value, $code, $line-number, $column-number, $additional) {
+declare %private 
+function ahab-rest:errorLayout
+(
+    $description, 
+    $value, 
+    $code, 
+    $line-number, 
+    $column-number, 
+    $additional
+) {
     <ahab:ahabError>
       <message>{ $description }</message>
       <value>{ $value }</value>
@@ -101,14 +108,19 @@ declare %private function ahab-rest:http-response($http-code as xs:integer, $res
 };
 
 declare %private function ahab-rest:debug($information as node()*) {
-  if($ahab-rest:debug/text() eq "yes")
-  then ahab-rest:http-response(400, $information)
-  else ahab-rest:http-response(400, <CTS:CTSError>{$information/code}</CTS:CTSError>)
+    let $code := 
+        if ($information/code/text() eq "UNKNOWN-RESOURCE")
+        then 422
+        else 400
+    return
+      if($ahab-rest:debug/text() eq "yes")
+      then ahab-rest:http-response($code, $information)
+      else ahab-rest:http-response($code, <ahab:ahabError>{$information/code}</ahab:ahabError>)
   
 };
 
 declare %private 
-function ahab-rest:http200(
+function ahab-rest:http-okay(
     $e_request as xs:string,
     $e_urn as xs:string*,
     $e_query as xs:string*,

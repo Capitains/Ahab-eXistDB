@@ -1,4 +1,4 @@
-<package xmlns="http://expath.org/ns/pkg" name="http://github.com/Capitains/Ahab-XQ" abbrev="AhabXQ" version="0.1.0" spec="1.0">
+<package xmlns="http://expath.org/ns/pkg" name="http://github.com/Capitains/Ahab-XQ" abbrev="AhabXQ" version="0.1.1" spec="1.0">
     <title>Capitains Ahab XQ</title>
     <dependency package="http://exist-db.org/apps/shared"/>
 </package>
