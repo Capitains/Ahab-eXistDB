@@ -7,8 +7,9 @@
     <license>GNU-LGPL</license>
     <copyright>true</copyright>
     <type>application</type>
-    <version>0.0.1</version>
+    <version>0.1.1</version>
     <target>ahab</target>
     <prepare>pre-install.xql</prepare>
+    <prepare>post-install.xql</prepare>
     <finish/>
 </meta>
